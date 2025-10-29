@@ -1,0 +1,11 @@
+{
+  "uri": "/anything",
+  "name": "httpbin_anything",
+  "desc": "POST /anything via APISIX",
+  "upstream_id": "httpbin_upstream",
+  "methods": ["POST"],
+  "plugins": {
+    "cors": {}
+  }
+}
+

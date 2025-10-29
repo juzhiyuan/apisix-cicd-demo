@@ -1,0 +1,50 @@
+services:
+  etcd:
+    image: bitnamilegacy/etcd:3.5.15
+    container_name: etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ENABLE_V2=false
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCDCTL_API=3
+    ports:
+      - "2379:2379"
+    healthcheck:
+      test: ["CMD", "etcdctl", "--endpoints=http://127.0.0.1:2379", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - apisix
+
+  apisix:
+    image: apache/apisix:3.14.1-ubuntu
+    container_name: apisix
+    depends_on:
+      etcd:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "9080:9080"   # APISIX HTTP
+      - "9443:9443"   # APISIX HTTPS
+      - "9180:9180"   # Admin API
+    volumes:
+      - ./apisix/conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+    networks:
+      - apisix
+
+  httpbin:
+    image: mccutchen/go-httpbin:latest
+    container_name: httpbin
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"   # Optional: access http://localhost:8080 directly
+    networks:
+      - apisix
+
+networks:
+  apisix:
+    driver: bridge

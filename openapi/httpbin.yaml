@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Httpbin via APISIX
+  description: |
+    Demonstration of routing httpbin through APISIX. Includes x-adc extensions for ADC to generate APISIX resources.
+  version: 1.0.0
+servers:
+  - url: http://httpbin:8080
+    description: Local httpbin upstream (ADC uses the first server entry to build upstream nodes)
+
+paths:
+  /get:
+    get:
+      summary: Proxy to httpbin GET
+      description: Returns request info from httpbin
+      tags: [httpbin]
+      x-adc-name: httpbin_get
+      x-adc-plugins:
+        cors: {}
+        # Rate limiting: max 3 requests per 30 seconds per client IP (https://docs.api7.ai/hub/limit-count/)
+        limit-count:
+          count: 3
+          time_window: 30
+          reject_code: 429
+          key: remote_addr
+          key_type: var
+          policy: local
+      responses:
+        '200':
+          description: OK
+
+  /status/{code}:
+    get:
+      summary: Return specific HTTP status code
+      tags: [httpbin]
+      x-adc-name: httpbin_status
+      x-adc-plugins:
+        cors: {}
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: integer
+            minimum: 100
+            maximum: 599
+      responses:
+        '200':
+          description: Example response (status code depends on path parameter)
+
+  /anything:
+    get:
+      summary: Echo any request data
+      tags: [httpbin]
+      x-adc-name: httpbin_anything
+      x-adc-plugins:
+        cors: {}
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+
+components: {}

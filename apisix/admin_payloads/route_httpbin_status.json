@@ -1,0 +1,11 @@
+{
+  "uri": "/status/*",
+  "name": "httpbin_status",
+  "desc": "GET /status/{code} via APISIX",
+  "upstream_id": "httpbin_upstream",
+  "methods": ["GET"],
+  "plugins": {
+    "cors": {}
+  }
+}
+

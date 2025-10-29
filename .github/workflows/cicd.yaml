@@ -1,0 +1,76 @@
+name: apisix-adc-cicd
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      # Demo only: plaintext values for simplicity. Do NOT use in production.
+      # Set this to your public VM address so GitHub Actions can reach APISIX Admin API.
+      # In Production environments, use secrets to inject these values securely.
+      APISIX_ADMIN_API: "http://68.183.178.88:9180"
+      # Demo admin key; replace if you change APISIX admin_key in config.
+      APISIX_ADMIN_KEY: "edd1c9f034335f136f87ad84b625c8f1"
+      ADC_VERSION: "0.21.2"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show environment
+        run: |
+          echo "APISIX_ADMIN_API=${APISIX_ADMIN_API}"
+          echo "adc version (if present):" || true
+          (adc --version || true)
+
+      - name: Install ADC CLI
+        run: |
+          set -euxo pipefail
+          arch="$(uname -m)"
+          case "${arch}" in
+            x86_64|amd64) adc_arch="amd64" ;;
+            arm64|aarch64) adc_arch="arm64" ;;
+            *)
+              echo "Unsupported architecture: ${arch}" >&2
+              exit 1
+              ;;
+          esac
+          url="https://github.com/api7/adc/releases/download/v${ADC_VERSION}/adc_${ADC_VERSION}_linux_${adc_arch}.tar.gz"
+          curl -sSL -o adc.tar.gz "${url}"
+          tar -xzf adc.tar.gz
+          install_dir="${HOME}/.local/bin"
+          mkdir -p "${install_dir}"
+          install -m 0755 adc "${install_dir}/adc"
+          echo "${install_dir}" >> "${GITHUB_PATH}"
+          adc --version
+
+      - name: Render OpenAPI -> APISIX config
+        id: render
+        run: |
+          bash scripts/adc_render.sh
+
+      - name: Upload rendered artifact (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apisix-config
+          path: dist/
+          if-no-files-found: ignore
+
+      - name: Publish to APISIX via Admin API/ADC
+        env:
+          APISIX_ADMIN_API: ${{ env.APISIX_ADMIN_API }}
+          APISIX_ADMIN_KEY: ${{ env.APISIX_ADMIN_KEY }}
+        run: |
+          if [ -z "${APISIX_ADMIN_API}" ] || [ -z "${APISIX_ADMIN_KEY}" ]; then
+            echo "APISIX_ADMIN_API / APISIX_ADMIN_KEY envs are required (demo uses plaintext)" >&2
+            exit 1
+          fi
+          bash scripts/adc_publish.sh

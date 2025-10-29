@@ -1,0 +1,11 @@
+{
+  "uri": "/get",
+  "name": "httpbin_get",
+  "desc": "GET /get via APISIX",
+  "upstream_id": "httpbin_upstream",
+  "methods": ["GET"],
+  "plugins": {
+    "cors": {}
+  }
+}
+
