@@ -29,6 +29,8 @@ apisix:
 stream_plugins: []
 plugin_attr:
   prometheus:
+    enable_export_server: true
+    export_uri: /apisix/prometheus/metrics
     export_addr:
       ip: "0.0.0.0"
       port: 9091

@@ -1,0 +1,10 @@
+{
+  "name": "httpbin_service",
+  "desc": "Httpbin service with shared plugins",
+  "plugins": {
+    "prometheus": {
+      "prefer_name": true
+    }
+  },
+  "upstream_id": "httpbin_upstream"
+}

@@ -1,11 +1,20 @@
 {
-  "uri": "/get",
   "name": "httpbin_get",
-  "desc": "GET /get via APISIX",
-  "upstream_id": "httpbin_upstream",
+  "desc": "Proxy to httpbin GET",
+  "service_id": "httpbin_service",
   "methods": ["GET"],
+  "uris": [
+    "/get"
+  ],
   "plugins": {
-    "cors": {}
+    "cors": {},
+    "limit-count": {
+      "count": 3,
+      "time_window": 30,
+      "reject_code": 429,
+      "key": "remote_addr",
+      "key_type": "var",
+      "policy": "local"
+    }
   }
 }
-

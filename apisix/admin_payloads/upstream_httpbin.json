@@ -1,10 +1,17 @@
 {
-  "type": "roundrobin",
-  "scheme": "http",
-  "nodes": {
-    "httpbin:8080": 1
-  },
-  "pass_host": "pass",
   "name": "httpbin_upstream",
-  "desc": "Local httpbin upstream"
+  "scheme": "http",
+  "pass_host": "pass",
+  "nodes": [
+    {
+      "host": "httpbin",
+      "port": 8080,
+      "weight": 100
+    }
+  ],
+  "timeout": {
+    "connect": 60,
+    "read": 60,
+    "send": 60
+  }
 }

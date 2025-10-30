@@ -8,6 +8,10 @@ servers:
   - url: http://httpbin:8080
     description: Local httpbin upstream (ADC uses the first server entry to build upstream nodes)
 
+x-adc-plugins:
+  prometheus:
+    prefer_name: true
+
 paths:
   /get:
     get:

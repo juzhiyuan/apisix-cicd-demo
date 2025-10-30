@@ -15,6 +15,13 @@ curl -fsS -X PUT \
   "${header[@]}" \
   -d @apisix/admin_payloads/upstream_httpbin.json
 
+# Create or upsert service
+echo "Upserting service: httpbin_service"
+curl -fsS -X PUT \
+  "${ADMIN_API_URL}/apisix/admin/services/httpbin_service" \
+  "${header[@]}" \
+  -d @apisix/admin_payloads/service_httpbin.json
+
 # Create/Update routes
 for r in httpbin_get httpbin_status httpbin_anything; do
   echo "Upserting route: $r"
@@ -25,4 +32,3 @@ for r in httpbin_get httpbin_status httpbin_anything; do
 done
 
 echo "Done. Try: curl -i http://localhost:9080/get"
-

@@ -1,11 +1,14 @@
 {
-  "uri": "/anything",
   "name": "httpbin_anything",
-  "desc": "POST /anything via APISIX",
-  "upstream_id": "httpbin_upstream",
-  "methods": ["POST"],
+  "desc": "Echo any request data",
+  "service_id": "httpbin_service",
+  "methods": [
+    "GET"
+  ],
+  "uris": [
+    "/anything"
+  ],
   "plugins": {
     "cors": {}
   }
 }
-

@@ -24,6 +24,7 @@ Prerequisites: Docker 20+, Docker Compose, curl.
   - `curl -i http://localhost:9080/get`
   - `curl -i http://localhost:9080/status/201`
   - `curl -i -X POST http://localhost:9080/anything -d 'hello=apisix'`
+- Observability endpoints are available once Compose is up: Prometheus UI at `http://localhost:9090`, Grafana at `http://localhost:3000` (login `admin` / `admin`), and the APISIX metrics exporter at `http://localhost:9091/apisix/prometheus/metrics`. The Prometheus plugin is attached to the shared `httpbin_service` with `prefer_name=true` so route names appear on labels.
 
 When ADC CLI is ready, use `make render` to produce APISIX config and `make publish` to deploy it (see below).
 
@@ -96,6 +97,8 @@ If outbound network is allowed and you prefer public `httpbin.org`:
 - `docker-compose.yml`: containers orchestration
 - `apisix/conf/config.yaml`: APISIX config mounted by Compose
 - `openapi/httpbin.yaml`: OpenAPI with x-adc hints for ADC
+- `monitoring/prometheus/prometheus.yml`: Prometheus scrape config (uses basic auth against APISIX metrics)
+- `monitoring/grafana/provisioning/datasources/datasource.yaml`: Grafana data source provisioning for Prometheus
 - `scripts/adc_render.sh`: ADC render script (auto-detect verbs)
 - `scripts/adc_publish.sh`: ADC publish/apply/sync script (auto-detect verbs)
 - `scripts/bootstrap_routes_via_admin.sh`: seed APISIX resources via Admin API
