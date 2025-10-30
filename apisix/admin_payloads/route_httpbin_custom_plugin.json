@@ -1,0 +1,16 @@
+{
+  "name": "httpbin_custom_plugin",
+  "desc": "Demo route using the custom-phase-demo plugin",
+  "service_id": "httpbin_service",
+  "methods": ["GET", "POST"],
+  "uris": [
+    "/custom-plugin/*"
+  ],
+  "plugins": {
+    "custom-phase-demo": {
+      "message": "hello-from-custom-plugin",
+      "append_body": true,
+      "strip_uri_prefix": "/custom-plugin"
+    }
+  }
+}

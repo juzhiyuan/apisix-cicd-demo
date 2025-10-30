@@ -24,6 +24,9 @@ Prerequisites: Docker 20+, Docker Compose, curl.
   - `curl -i http://localhost:9080/get`
   - `curl -i http://localhost:9080/status/201`
   - `curl -i -X POST http://localhost:9080/anything -d 'hello=apisix'`
+- Custom plugin demo:
+  - `curl -i http://localhost:9080/custom-plugin/anything`
+  - Response headers/body include markers from the `custom-phase-demo` plugin
 - Observability endpoints are available once Compose is up: Prometheus UI at `http://localhost:9090`, Grafana at `http://localhost:3000` (login `admin` / `admin`), and the APISIX metrics exporter at `http://localhost:9091/apisix/prometheus/metrics`. The Prometheus plugin is attached to the shared `httpbin_service` with `prefer_name=true` so route names appear on labels.
 
 When ADC CLI is ready, use `make render` to produce APISIX config and `make publish` to deploy it (see below).
@@ -85,6 +88,13 @@ If outbound network is allowed and you prefer public `httpbin.org`:
 - `make publish`: publish config to APISIX Admin API
 - `make seed`: seed routes via Admin API (no ADC)
 - `make down`: stop containers (no persistent volumes)
+
+## Custom Plugin Demo
+
+- Plugin source: `apisix/custom-plugins/custom-phase-demo.lua` (covers `rewrite`, `access`, `balancer`, `header_filter`, `body_filter`, and `log` phases).
+- The plugin is mounted into the APISIX container via `docker-compose.yml` and enabled in `apisix/conf/config.yaml` by adding `custom-phase-demo` to the plugin list.
+- Route payload `apisix/admin_payloads/route_httpbin_custom_plugin.json` enables the plugin on `/custom-plugin/*`, strips that prefix before proxying upstream, and is installed by `make seed`.
+- Inspect the effect with `curl -i http://localhost:9080/custom-plugin/anything`; the plugin injects request headers (including the rewritten URI), a response header, appends a body marker, and emits log entries showing each phase.
 
 ## Running on a Public VM
 

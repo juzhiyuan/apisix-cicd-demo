@@ -32,6 +32,7 @@ services:
       - "9180:9180"   # Admin API
     volumes:
       - ./apisix/conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./apisix/custom-plugins/custom-phase-demo.lua:/usr/local/apisix/apisix/plugins/custom-phase-demo.lua:ro
     networks:
       - apisix
 
