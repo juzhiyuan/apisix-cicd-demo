@@ -25,7 +25,7 @@ paths:
         limit-count:
           count: 3
           time_window: 30
-          reject_code: 429
+          rejected_code: 429
           key: remote_addr
           key_type: var
           policy: local
