@@ -72,4 +72,28 @@ paths:
         '200':
           description: OK
 
+  /custom-plugin/{path*}:
+    get:
+      summary: Demonstrate custom-phase-demo plugin
+      description: |
+        Routes through APISIX with the custom plugin enabled. The plugin strips the `/custom-plugin`
+        prefix, injects headers, appends a response body marker, and logs upstream details.
+      tags: [httpbin]
+      x-adc-name: httpbin_custom_plugin
+      x-adc-plugins:
+        custom-phase-demo:
+          message: hello-from-custom-plugin
+          append_body: true
+          strip_uri_prefix: /custom-plugin
+      parameters:
+        - in: path
+          name: path*
+          required: false
+          schema:
+            type: string
+          description: Remaining path passed to httpbin after `/custom-plugin` is stripped.
+      responses:
+        '200':
+          description: OK
+
 components: {}
