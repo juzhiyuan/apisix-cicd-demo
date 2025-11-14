@@ -1,0 +1,53 @@
+# Two independent Services pointing at the same upstream but using different OIDC configs.
+services:
+  - name: httpbin_realm_alpha
+    description: Host realm-a.example.com routed through Service with realm Alpha OIDC
+    plugins:
+      openid-connect:
+        bearer_only: false
+        client_id: realm-alpha-client
+        client_secret: ISe30mccx6qCx5N7LGiGHGC8XZ1Qg7yH
+        discovery: https://keycloak.example.com/realms/test-apisix-realm-1/.well-known/openid-configuration
+        scope: openid profile
+        redirect_uri: http://localhost:9080/_callback
+        session:
+          secret: alpha-session-secret
+    routes:
+      - name: httpbin_realm_alpha_route
+        hosts:
+          - realm-a.example.com
+        uris:
+          - /*
+    upstream:
+      name: httpbin_shared
+      nodes:
+        - host: httpbin
+          port: 8080
+          weight: 100
+      type: roundrobin
+
+  - name: httpbin_realm_bravo
+    description: Host realm-b.example.com routed through Service with realm Bravo OIDC
+    plugins:
+      openid-connect:
+        bearer_only: false
+        client_id: realm-bravo-client
+        client_secret: ISe30mccx6qCx5N7LGiGHGC8XZ1Qg7yH
+        discovery: https://keycloak.example.com/realms/test-apisix-realm-2/.well-known/openid-configuration
+        scope: openid profile
+        redirect_uri: http://localhost:9080/_callback
+        session:
+          secret: bravo-session-secret
+    routes:
+      - name: httpbin_realm_bravo_route
+        hosts:
+          - realm-b.example.com
+        uris:
+          - /*
+    upstream:
+      name: httpbin_shared
+      nodes:
+        - host: httpbin
+          port: 8080
+          weight: 100
+      type: roundrobin

@@ -1,0 +1,111 @@
+# One Service/Route combination that chooses the right OIDC config at runtime via serverless pre-function.
+services:
+  - name: httpbin_dynamic_realms
+    description: Single service that switches OIDC config based on Host header.
+    plugins:
+      serverless-pre-function:
+        phase: rewrite
+        functions:
+          - |
+              return function(conf, ctx)
+                  local host_to_oidc = {
+                      ["realm-a.example.com"] = {
+                          bearer_only = false,
+                          client_id = "realm-alpha-client",
+                          client_secret = "ISe30mccx6qCx5N7LGiGHGC8XZ1Qg7yH",
+                          discovery = "https://keycloak.example.com/realms/test-apisix-realm-1/.well-known/openid-configuration",
+                          redirect_uri = "http://localhost:9080/_callback",
+                          scope = "openid profile",
+                          session = {
+                              secret = "alpha-session-secret"
+                          }
+                      },
+                      ["realm-b.example.com"] = {
+                          bearer_only = false,
+                          client_id = "realm-bravo-client",
+                          client_secret = "ISe30mccx6qCx5N7LGiGHGC8XZ1Qg7yH",
+                          discovery = "https://keycloak.example.com/realms/test-apisix-realm-2/.well-known/openid-configuration",
+                          redirect_uri = "http://localhost:9080/_callback",
+                          scope = "openid profile",
+                          session = {
+                              secret = "bravo-session-secret"
+                          }
+                      }
+                  }
+
+                  local host = (ctx.var and ctx.var.host) or ngx.var.host
+
+                  if not ctx.oidc_prefunc_dumped then
+                      local ctx_keys = {}
+                      for k, _ in pairs(ctx) do
+                          ctx_keys[#ctx_keys + 1] = k
+                      end
+                      table.sort(ctx_keys)
+                      ngx.log(ngx.INFO, "[oidc-prefunction] ctx keys: ", table.concat(ctx_keys, ","))
+                      ctx.oidc_prefunc_dumped = true
+                  end
+                  local selected = host_to_oidc[host]
+                  if not selected then
+                      return
+                  end
+
+                  local function get_oidc_from_holder(holder)
+                      if not holder then
+                          return nil
+                      end
+
+                      local value = holder.value or holder
+                      if value.plugins and value.plugins["openid-connect"] then
+                          return value.plugins["openid-connect"]
+                      end
+
+                      return nil
+                  end
+
+                  local oidc = ctx.plugins and ctx.plugins["openid-connect"]
+                      or get_oidc_from_holder(ctx.route)
+                      or get_oidc_from_holder(ctx.matched_route)
+                      or get_oidc_from_holder(ctx.route_conf)
+                      or get_oidc_from_holder(ctx.service)
+                      or get_oidc_from_holder(ctx.matched_service)
+                      or get_oidc_from_holder(ctx.service_conf)
+
+                  if not oidc then
+                      ngx.log(ngx.WARN, "[oidc-prefunction] no openid-connect config found for host ", host)
+                      return
+                  end
+
+                  for key, value in pairs(selected) do
+                      if type(value) == "table" then
+                          local dest = {}
+                          for k, v in pairs(value) do
+                              dest[k] = v
+                          end
+                          oidc[key] = dest
+                      else
+                          oidc[key] = value
+                      end
+                  end
+
+                  ngx.log(ngx.INFO, "[oidc-prefunction] applied realm config for host ", host)
+              end
+      openid-connect:
+        # Default/fallback configuration, overwritten by the pre-function for known hosts.
+        bearer_only: false
+        client_id: PLACEHOLDER_CLIENT
+        client_secret: PLACEHOLDER_SECRET
+        discovery: https://keycloak.example.com/realms/PLACEHOLDER/.well-known/openid-configuration
+        scope: openid profile
+        redirect_uri: http://localhost:9080/_callback
+        session:
+          secret: alpha-session-secret
+    routes:
+      - name: httpbin_dynamic_realm_route
+        uris:
+          - /*
+    upstream:
+      nodes:
+        - host: httpbin
+          port: 8080
+          weight: 100
+      type: roundrobin
